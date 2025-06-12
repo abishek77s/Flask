@@ -14,14 +14,10 @@ def GetFile(filename):
             raise FileNotFoundError(f"File not found: {file_path}")
     
         with open(file_path, 'r') as file:
-            try:
-                ex5 = json.load(file)
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON: {e}")
-        return ex5
-        
+                file = json.load(file)
+                return file
     except FileNotFoundError as fnf_error:
-        return jsonify({"error": "File not found"}), 404
+        raise FileNotFoundError("error: File not found.")
     
 def UpdateFile(filename, content):
     try:
@@ -29,7 +25,7 @@ def UpdateFile(filename, content):
             json.dump(content, file, indent=2)
 
     except FileNotFoundError as fnf_error:
-        return jsonify({"error": "Failed to create new file."}), 404
+        raise FileNotFoundError("error: Failed to create new file.") 
             
        
                 
@@ -72,17 +68,26 @@ def deleteJSON():
         return jsonify({"Success": f"File {filename} has been deleted."}), 200
     except Exception as e:
         return {"error": str(e)} 
+
+
+# @app.route("/api/json/<filename>", methods=['DELETE'])
+# def deleteJSON():
+#     data = request.json
+#     name = data.get('name')
+#     id = data.get('id')
+#     type = data.get('type')
+    
     
 @app.route("/api/json/<filename>", methods=['PUT'])
 def updateJSON(filename):
     data = request.json
     name = data.get('name')
-    id = data.get('id')
+    id = str(data.get('id'))
     type = data.get('type')
     try:
         JSONfile = GetFile(filename)
-    except FileNotFoundError:
-        return JSONfile
+    except Exception as e:
+        return {"error": str(e)}
     
     for donut in JSONfile:
         found = False
@@ -90,9 +95,9 @@ def updateJSON(filename):
             found = True
             batter = donut.get("batters", {}).get("batter", [])
             
-            if not any(b.get("id") == str(id) for b in batter):
+            if not any(b.get("id") == id for b in batter):
                 batter.append({
-                    "id": str(id),
+                    "id": id,
                     "type": type
                 })
                 try:

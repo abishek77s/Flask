@@ -55,13 +55,23 @@ def createJSON():
     try:
         if os.path.exists("E:/Flask/"+ filename + ".json"):
             return jsonify({"Failed": f"File {filename} already exists."}), 409
-        status = UpdateFile(filename, content)
+        UpdateFile(filename, content)
         return jsonify({"Success": f"File {filename} has been created."}), 200
     except Exception as e:
         return {"error": str(e)} 
-    finally: 
-         return status 
 
+
+@app.route("/api/json/delete", methods=['DELETE'])
+def deleteJSON():
+    data = request.json
+    filename = data.get('filename')
+    try:
+        if not os.path.exists("E:/Flask/"+ filename + ".json"):
+            return jsonify({"Failed": f"File {filename} doesn't exists."}), 409
+        os.remove("E:/Flask/"+ filename + ".json")
+        return jsonify({"Success": f"File {filename} has been deleted."}), 200
+    except Exception as e:
+        return {"error": str(e)} 
     
 @app.route("/api/json/<filename>", methods=['PUT'])
 def updateJSON(filename):

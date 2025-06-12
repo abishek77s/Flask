@@ -78,12 +78,15 @@ def updateJSON(filename):
             found = True
             batter = donut.get("batters", {}).get("batter", [])
             
-            if not any(b.get("id") == id for b in batter):
+            if not any(b.get("id") == str(id) for b in batter):
                 batter.append({
                     "id": str(id),
                     "type": type
                 })
-                UpdateFile(filename, JSONfile)
+                try:
+                    status = UpdateFile(filename, JSONfile)
+                except:
+                    return status
                 return jsonify({"Success": f"Added batter into {name}"}), 200
             else:
                 return jsonify({"error": f"Batter with id:{id} already exists."}), 409

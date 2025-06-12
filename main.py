@@ -70,16 +70,39 @@ def deleteJSON():
         return {"error": str(e)} 
 
 
-# @app.route("/api/json/<filename>", methods=['DELETE'])
-# def deleteJSON():
-#     data = request.json
-#     name = data.get('name')
-#     id = data.get('id')
-#     type = data.get('type')
+@app.route("/api/json/<filename>", methods=['DELETE'])
+def deleteJSONContent(filename):
+    data = request.json
+    name = data.get('name')
+    id = str(data.get('id'))
+
+    try:
+        JSONfile = GetFile(filename)
+    except FileNotFoundError:
+        return jsonify({"error": f"File {filename}.json not found"}), 404
+
+    for donut in JSONfile:
+        if donut.get("name") == name:
+            batters = donut.get("batters", {}).get("batter", [])
+            original_len = len(batters)
+            new_batters = [b for b in batters if b.get("id") != id]
+
+            if len(new_batters) == original_len:
+                return jsonify({"error": f"No batter with id {id} found for donut {name}"}), 404
+            donut["batters"]["batter"] = new_batters
+
+            try:
+                UpdateFile(filename, JSONfile)
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+            
+            return jsonify({"success": f"Batter with id {id} deleted from {name}"}), 200
+        
+    return jsonify({"error": f"Donut named {name} not found."}), 404
     
     
 @app.route("/api/json/<filename>", methods=['PUT'])
-def updateJSON(filename):
+def updateJSONContent(filename):
     data = request.json
     name = data.get('name')
     id = str(data.get('id'))

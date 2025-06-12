@@ -57,8 +57,10 @@ def createJSON():
             return jsonify({"Failed": f"File {filename} already exists."}), 409
         status = UpdateFile(filename, content)
         return jsonify({"Success": f"File {filename} has been created."}), 200
-    except FileNotFoundError:
-        return status
+    except Exception as e:
+        return {"error": str(e)} 
+    finally: 
+         return status 
 
     
 @app.route("/api/json/<filename>", methods=['PUT'])
@@ -84,10 +86,12 @@ def updateJSON(filename):
                     "type": type
                 })
                 try:
-                    status = UpdateFile(filename, JSONfile)
-                except:
-                    return status
-                return jsonify({"Success": f"Added batter into {name}"}), 200
+                    UpdateFile(filename, JSONfile)
+                except Exception as e:
+                    return {"error": str(e)} 
+                finally: 
+                    return jsonify({"Success": f"Added batter into {name}"}), 200
+                
             else:
                 return jsonify({"error": f"Batter with id:{id} already exists."}), 409
     if not found:

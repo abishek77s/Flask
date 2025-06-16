@@ -6,9 +6,11 @@ import os
 
 app = Flask(__name__)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/"
+
 
 def GetFile(filename):
-    file_path = "E:/Flask/"+ filename + ".json"
+    file_path = BASE_DIR+ filename + ".json"
     try:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -21,7 +23,7 @@ def GetFile(filename):
     
 def UpdateFile(filename, content):
     try:
-        with open("E:/Flask/"+ filename + ".json", 'w') as file:
+        with open(BASE_DIR+ filename + ".json", 'w') as file:
             json.dump(content, file, indent=2)
 
     except FileNotFoundError as fnf_error:
@@ -49,7 +51,7 @@ def createJSON():
     filename = data.get('filename')
     content = data.get('content')
     try:
-        if os.path.exists("E:/Flask/"+ filename + ".json"):
+        if os.path.exists(BASE_DIR+ filename + ".json"):
             return jsonify({"Failed": f"File {filename} already exists."}), 409
         UpdateFile(filename, content)
         return jsonify({"Success": f"File {filename} has been created."}), 200
@@ -62,9 +64,9 @@ def deleteJSON():
     data = request.json
     filename = data.get('filename')
     try:
-        if not os.path.exists("E:/Flask/"+ filename + ".json"):
+        if not os.path.exists(BASE_DIR+ filename + ".json"):
             return jsonify({"Failed": f"File {filename} doesn't exists."}), 409
-        os.remove("E:/Flask/"+ filename + ".json")
+        os.remove(BASE_DIR+ filename + ".json")
         return jsonify({"Success": f"File {filename} has been deleted."}), 200
     except Exception as e:
         return {"error": str(e)} 

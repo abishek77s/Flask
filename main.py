@@ -22,6 +22,9 @@ collection = db["Items"]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/"
 
+@app.route("/api/hello", methods=['GET'])
+def hello():
+    return "Hello, World!"
 
 @app.route("/api/item/<id>", methods=['GET'])
 def get_item(id):
@@ -42,31 +45,23 @@ def UpdateFile(filename, content):
        
                 
 
-
-
-@app.route("/api/hello", methods=['GET'])
-def hello():
-    return "Hello, World!"
-
-
-# @app.route("/api/json/<filename>", methods=['GET'])
-# def getJSON(filename):
-#     file = GetFile(filename)
-#     return file
-
-
-@app.route("/api/json/create", methods=['POST'])
-def createJSON():
+@app.route("/api/item/create", methods=['POST'])
+def create_item():
     data = request.json
-    filename = data.get('filename')
-    content = data.get('content')
+    item_id = data.get("id")
+
+    if not item_id:
+        return jsonify({"error": "Missing 'id' in request"}), 400
+
+    if collection.find_one({"id": item_id}):
+        return jsonify({"error": f"Item with id '{item_id}' already exists."}), 409
+
     try:
-        if os.path.exists(BASE_DIR+ filename + ".json"):
-            return jsonify({"Failed": f"File {filename} already exists."}), 409
-        UpdateFile(filename, content)
-        return jsonify({"Success": f"File {filename} has been created."}), 200
+        collection.insert_one(data)
+        return jsonify({"success": f"Item with id '{item_id}' created."}), 201
     except Exception as e:
-        return {"error": str(e)} 
+        return jsonify({"error": str(e)}), 500
+
 
 
 @app.route("/api/json/delete", methods=['DELETE'])

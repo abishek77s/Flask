@@ -19,12 +19,10 @@ collection = db["Items"]
 
 
 
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/"
-
 @app.route("/api/hello", methods=['GET'])
 def hello():
     return "Hello, World!"
+
 
 @app.route("/api/item/<id>", methods=['GET'])
 def get_item(id):
@@ -34,6 +32,7 @@ def get_item(id):
     else:
         return jsonify({"error": f"Item with id {id} not found"}), 404
        
+
 
 @app.route("/api/item/create", methods=['POST'])
 def create_item():
@@ -62,6 +61,7 @@ def delete_item(id):
     else:
         return jsonify({"error": f"Item with id '{id}' not found."}), 404
 
+
 @app.route("/api/item/<id>/batter", methods=['DELETE'])
 def delete_batter_from_item(id):
     data = request.json
@@ -89,6 +89,7 @@ def delete_batter_from_item(id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+    
     
 @app.route("/api/item/<id>", methods=['PUT'])
 def add_batter_to_item(id):

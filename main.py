@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-import json
+
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
@@ -33,17 +33,7 @@ def get_item(id):
         return dumps(item), 200
     else:
         return jsonify({"error": f"Item with id {id} not found"}), 404
-    
-def UpdateFile(filename, content):
-    try:
-        with open(BASE_DIR+ filename + ".json", 'w') as file:
-            json.dump(content, file, indent=2)
-
-    except FileNotFoundError as fnf_error:
-        raise FileNotFoundError("error: Failed to create new file.") 
-            
        
-                
 
 @app.route("/api/item/create", methods=['POST'])
 def create_item():
@@ -72,72 +62,64 @@ def delete_item(id):
     else:
         return jsonify({"error": f"Item with id '{id}' not found."}), 404
 
-
-
-# @app.route("/api/json/<filename>", methods=['DELETE'])
-# def deleteJSONContent(filename):
-#     data = request.json
-#     name = data.get('name')
-#     id = str(data.get('id'))
-
-#     try:
-#         JSONfile = GetFile(filename)
-#     except FileNotFoundError:
-#         return jsonify({"error": f"File {filename}.json not found"}), 404
-
-#     for donut in JSONfile:
-#         if donut.get("name") == name:
-#             batters = donut.get("batters", {}).get("batter", [])
-#             original_len = len(batters)
-#             new_batters = [b for b in batters if b.get("id") != id]
-
-#             if len(new_batters) == original_len:
-#                 return jsonify({"error": f"No batter with id {id} found for donut {name}"}), 404
-#             donut["batters"]["batter"] = new_batters
-
-#             try:
-#                 UpdateFile(filename, JSONfile)
-#             except Exception as e:
-#                 return jsonify({"error": str(e)}), 500
-            
-#             return jsonify({"success": f"Batter with id {id} deleted from {name}"}), 200
-        
-#     return jsonify({"error": f"Donut named {name} not found."}), 404
+@app.route("/api/item/<id>/batter", methods=['DELETE'])
+def delete_batter_from_item(id):
+    data = request.json
+    batter_id = str(data.get("id"))
     
+    if not batter_id:
+        return jsonify({"error": "Missing 'id' of batter to delete"}), 400
+
+    item = collection.find_one({"id": id})
+    if not item:
+        return jsonify({"error": f"Item with id '{id}' not found."}), 404
+
+    batters = item.get("batters", {}).get("batter", [])
+    new_batters = [b for b in batters if b.get("id") != batter_id]
+
+    if len(batters) == len(new_batters):
+        return jsonify({"error": f"No batter with id '{batter_id}' found."}), 404
+
+    try:
+        collection.update_one(
+            {"id": id},
+            {"$set": {"batters.batter": new_batters}}
+        )
+        return jsonify({"success": f"Batter with id '{batter_id}' removed from item '{id}'."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
     
-# @app.route("/api/json/<filename>", methods=['PUT'])
-# def updateJSONContent(filename):
-#     data = request.json
-#     name = data.get('name')
-#     id = str(data.get('id'))
-#     type = data.get('type')
-#     try:
-#         JSONfile = GetFile(filename)
-#     except Exception as e:
-#         return {"error": str(e)}
-    
-#     for donut in JSONfile:
-#         found = False
-#         if donut.get("name") == name:
-#             found = True
-#             batter = donut.get("batters", {}).get("batter", [])
-            
-#             if not any(b.get("id") == id for b in batter):
-#                 batter.append({
-#                     "id": id,
-#                     "type": type
-#                 })
-#                 try:
-#                     UpdateFile(filename, JSONfile)
-#                 except Exception as e:
-#                     return {"error": str(e)} 
-#                 finally: 
-#                     return jsonify({"Success": f"Added batter into {name}"}), 200
-                
-#             else:
-#                 return jsonify({"error": f"Batter with id:{id} already exists."}), 409
-#     if not found:
-#             return jsonify({"error": f"Donut named {name} not found."}), 400
+@app.route("/api/item/<id>", methods=['PUT'])
+def add_batter_to_item(id):
+    data = request.json
+    batter_id = str(data.get('id'))
+    batter_type = data.get('type')
+
+    if not batter_id or not batter_type:
+        return jsonify({"error": "Missing 'id' or 'type' in request"}), 400
+
+    item = collection.find_one({"id": id})
+    if not item:
+        return jsonify({"error": f"Item with id '{id}' not found."}), 404
+
+    batters_list = item.get("batters", {}).get("batter", [])
+
+    if any(batter.get("id") == batter_id for batter in batters_list):
+        return jsonify({"error": f"Batter with id '{batter_id}' already exists."}), 409
+
+    batters_list.append({
+        "id": batter_id,
+        "type": batter_type
+    })
+
+    updated_batters = {"batters.batter": batters_list}
+    try:
+        collection.update_one({"id": id}, {"$set": updated_batters})
+        return jsonify({"success": f"Batter with id '{batter_id}' added to item '{id}'."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
     
 if __name__ == "__main__":

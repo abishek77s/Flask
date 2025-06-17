@@ -64,17 +64,14 @@ def create_item():
 
 
 
-@app.route("/api/json/delete", methods=['DELETE'])
-def deleteJSON():
-    data = request.json
-    filename = data.get('filename')
-    try:
-        if not os.path.exists(BASE_DIR+ filename + ".json"):
-            return jsonify({"Failed": f"File {filename} doesn't exists."}), 409
-        os.remove(BASE_DIR+ filename + ".json")
-        return jsonify({"Success": f"File {filename} has been deleted."}), 200
-    except Exception as e:
-        return {"error": str(e)} 
+@app.route("/api/item/<id>", methods=['DELETE'])
+def delete_item(id):
+    result = collection.delete_one({"id": id})
+    if result.deleted_count == 1:
+        return jsonify({"success": f"Item with id '{id}' has been deleted."}), 200
+    else:
+        return jsonify({"error": f"Item with id '{id}' not found."}), 404
+
 
 
 # @app.route("/api/json/<filename>", methods=['DELETE'])
